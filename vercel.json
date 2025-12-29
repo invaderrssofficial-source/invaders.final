@@ -2,6 +2,7 @@
   "buildCommand": "echo 'Backend only'",
   "outputDirectory": ".",
   "framework": null,
+  "installCommand": "npm install",
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -11,7 +12,10 @@
   "functions": {
     "api/index.ts": {
       "runtime": "nodejs18.x",
-      "maxDuration": 10
+      "maxDuration": 30
     }
+  },
+  "env": {
+    "NODE_VERSION": "18.x"
   }
 }
