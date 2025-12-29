@@ -1,5 +1,4 @@
 {
-  "nodeVersion": "18.x",
   "buildCommand": "echo 'Backend only'",
   "outputDirectory": ".",
   "rewrites": [
@@ -10,7 +9,7 @@
   ],
   "functions": {
     "api/index.ts": {
-      "runtime": "@vercel/node@3.0.0"
+      "maxDuration": 10
     }
   }
 }
