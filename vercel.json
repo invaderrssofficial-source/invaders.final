@@ -1,4 +1,5 @@
 {
+  "nodeVersion": "18.x",
   "buildCommand": "echo 'Backend only'",
   "outputDirectory": ".",
   "rewrites": [
