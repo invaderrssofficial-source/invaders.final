@@ -1,6 +1,7 @@
 {
   "buildCommand": "echo 'Backend only'",
   "outputDirectory": ".",
+  "framework": null,
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -9,6 +10,7 @@
   ],
   "functions": {
     "api/index.ts": {
+      "runtime": "nodejs18.x",
       "maxDuration": 10
     }
   }
