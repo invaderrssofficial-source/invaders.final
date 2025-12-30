@@ -10,16 +10,31 @@ function getSupabaseClient(): SupabaseClient {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+  console.log("[Supabase] Initializing client...", {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseServiceKey,
+    urlPreview: supabaseUrl?.substring(0, 20),
+  });
+
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.error("Missing Supabase environment variables:", {
+    const error = {
+      message: "Missing required Supabase environment variables",
       hasUrl: !!supabaseUrl,
       hasKey: !!supabaseServiceKey,
-    });
-    throw new Error("Missing required Supabase environment variables");
+      availableEnvKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE')),
+    };
+    console.error("[Supabase] Configuration error:", error);
+    throw new Error(JSON.stringify(error));
   }
 
-  supabaseInstance = createClient(supabaseUrl, supabaseServiceKey);
-  return supabaseInstance;
+  try {
+    supabaseInstance = createClient(supabaseUrl, supabaseServiceKey);
+    console.log("[Supabase] Client initialized successfully");
+    return supabaseInstance;
+  } catch (err) {
+    console.error("[Supabase] Failed to create client:", err);
+    throw err;
+  }
 }
 
 export const supabase = new Proxy({} as SupabaseClient, {
