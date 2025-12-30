@@ -10,6 +10,15 @@ const app = new Hono().basePath("/api");
 
 app.use("*", cors());
 
+app.use("*", async (c, next) => {
+  const timeout = setTimeout(() => {
+    console.error("[API] Request taking too long, approaching timeout");
+  }, 25000);
+  
+  await next();
+  clearTimeout(timeout);
+});
+
 app.use(
   "/trpc/*",
   trpcServer({
