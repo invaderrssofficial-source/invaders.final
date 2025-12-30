@@ -13,28 +13,32 @@ function getSupabaseClient(): SupabaseClient {
   console.log("[Supabase] Initializing client...", {
     hasUrl: !!supabaseUrl,
     hasKey: !!supabaseServiceKey,
-    urlPreview: supabaseUrl?.substring(0, 20),
   });
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    const error = {
-      message: "Missing required Supabase environment variables",
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseServiceKey,
-      availableEnvKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE')),
-    };
-    console.error("[Supabase] Configuration error:", error);
-    throw new Error(JSON.stringify(error));
+    console.error("[Supabase] Missing env vars");
+    throw new Error("Missing Supabase configuration");
   }
 
-  try {
-    supabaseInstance = createClient(supabaseUrl, supabaseServiceKey);
-    console.log("[Supabase] Client initialized successfully");
-    return supabaseInstance;
-  } catch (err) {
-    console.error("[Supabase] Failed to create client:", err);
-    throw err;
-  }
+  supabaseInstance = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+    global: {
+      fetch: (url, options = {}) => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        return fetch(url, {
+          ...options,
+          signal: controller.signal,
+        }).finally(() => clearTimeout(timeout));
+      },
+    },
+  });
+  
+  console.log("[Supabase] Client initialized");
+  return supabaseInstance;
 }
 
 export const supabase = new Proxy({} as SupabaseClient, {
