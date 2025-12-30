@@ -5,11 +5,18 @@ import { supabase } from "../supabase";
 export const heroesRouter = createTRPCRouter({
   getAll: publicProcedure.query(async () => {
     console.log("[Heroes] Fetching all heroes...");
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Query timeout after 5s')), 5000)
+    );
+    
     try {
-      const { data, error } = await supabase
+      const queryPromise = supabase
         .from("heroes")
         .select("*")
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .limit(1000);
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error("[Heroes] Error fetching heroes:", error.message, error.code);
@@ -17,7 +24,7 @@ export const heroesRouter = createTRPCRouter({
       }
 
       console.log("[Heroes] Successfully fetched", data?.length ?? 0, "heroes");
-      return (data ?? []).map((hero) => ({
+      return (data ?? []).map((hero: any) => ({
         id: hero.id,
         name: hero.name,
         position: hero.position,

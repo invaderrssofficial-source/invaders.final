@@ -5,11 +5,18 @@ import { supabase } from "../supabase";
 export const merchRouter = createTRPCRouter({
   getAll: publicProcedure.query(async () => {
     console.log("[Merch] Fetching all merch items...");
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Query timeout after 5s')), 5000)
+    );
+    
     try {
-      const { data, error } = await supabase
+      const queryPromise = supabase
         .from("merch_items")
         .select("*")
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .limit(1000);
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error("[Merch] Error fetching items:", error.message, error.code);
@@ -17,7 +24,7 @@ export const merchRouter = createTRPCRouter({
       }
 
       console.log("[Merch] Successfully fetched", data?.length ?? 0, "items");
-      return (data ?? []).map((item) => ({
+      return (data ?? []).map((item: any) => ({
         id: item.id,
         name: item.name,
         price: item.price,

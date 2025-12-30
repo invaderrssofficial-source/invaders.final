@@ -5,11 +5,18 @@ import { supabase } from "../supabase";
 export const ordersRouter = createTRPCRouter({
   getAll: publicProcedure.query(async () => {
     console.log("[Orders] Fetching all orders...");
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Query timeout after 5s')), 5000)
+    );
+    
     try {
-      const { data, error } = await supabase
+      const queryPromise = supabase
         .from("orders")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(1000);
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error("[Orders] Error fetching orders:", error.message, error.code);
@@ -17,7 +24,7 @@ export const ordersRouter = createTRPCRouter({
       }
 
       console.log("[Orders] Successfully fetched", data?.length ?? 0, "orders");
-      return (data ?? []).map((order) => ({
+      return (data ?? []).map((order: any) => ({
         id: order.id,
         productName: order.product_name,
         productImage: order.product_image,
@@ -53,8 +60,12 @@ export const ordersRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       console.log("[Orders] Creating order for:", input.customerName);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Mutation timeout after 5s')), 5000)
+      );
+      
       try {
-        const { data, error } = await supabase
+        const mutationPromise = supabase
           .from("orders")
           .insert({
             product_name: input.productName,
@@ -70,6 +81,8 @@ export const ordersRouter = createTRPCRouter({
           })
           .select()
           .single();
+
+        const { data, error } = await Promise.race([mutationPromise, timeoutPromise]) as any;
 
         if (error) {
           console.error("[Orders] Error creating order:", error.message, error.code);

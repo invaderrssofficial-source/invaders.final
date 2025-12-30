@@ -25,12 +25,18 @@ function getSupabaseClient(): SupabaseClient {
       autoRefreshToken: false,
       persistSession: false,
     },
+    db: {
+      schema: 'public',
+    },
     global: {
       fetch: (url, options = {}) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
         return fetch(url, {
           ...options,
-          signal: AbortSignal.timeout(15000),
-        });
+          signal: controller.signal,
+        }).finally(() => clearTimeout(timeoutId));
       },
     },
   });

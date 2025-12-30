@@ -64,7 +64,7 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
     deleteMutation.mutate({ id: orderId });
   }, [deleteMutation]);
 
-  const orders: Order[] = (ordersQuery.data ?? []).map((order) => ({
+  const orders: Order[] = (ordersQuery.data ?? []).map((order: any) => ({
     id: order.id,
     productName: order.productName,
     productImage: order.productImage,

@@ -536,7 +536,7 @@ export default function AdminScreen() {
           <Text style={styles.emptyText}>Add your first merchandise item</Text>
         </View>
       ) : (
-        merchItems.map((item) => (
+        merchItems.map((item: MerchItem) => (
           <View key={item.id} style={styles.itemCard}>
             <Image source={{ uri: item.image }} style={styles.itemImage} />
             <View style={styles.itemInfo}>
@@ -581,7 +581,7 @@ export default function AdminScreen() {
           <Text style={styles.emptyText}>Add your first hero</Text>
         </View>
       ) : (
-        heroes.map((hero) => (
+        heroes.map((hero: Hero) => (
           <View key={hero.id} style={styles.itemCard}>
             <Image source={{ uri: hero.image }} style={styles.heroImage} />
             <View style={styles.itemInfo}>

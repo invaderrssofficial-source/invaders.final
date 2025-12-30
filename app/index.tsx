@@ -45,7 +45,7 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import Colors from '@/constants/colors';
 import { useOrders } from '@/contexts/OrdersContext';
-import { useAppContent, MerchItem } from '@/contexts/AppContentContext';
+import { useAppContent, MerchItem, Hero } from '@/contexts/AppContentContext';
 
 import AnimatedCard from '@/components/AnimatedCard';
 import AchievementCard from '@/components/AchievementCard';
@@ -329,7 +329,7 @@ export default function HomeScreen() {
           <Text style={styles.merchSubtitle}>Rep the Invaders</Text>
 
           <View style={styles.merchGrid}>
-            {merchItems.map((item) => (
+            {merchItems.map((item: MerchItem) => (
               <TouchableCard
                 key={item.id}
                 style={styles.merchCard}
@@ -472,7 +472,7 @@ export default function HomeScreen() {
           <Text style={styles.heroesSubtitle}>The Pride of Invaders</Text>
 
           <View style={styles.playersGrid}>
-            {heroes.map((player, index) => (
+            {heroes.map((player: Hero, index: number) => (
               <TouchableCard
                 key={player.id}
                 style={styles.playerCard}
