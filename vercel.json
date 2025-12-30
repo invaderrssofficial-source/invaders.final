@@ -1,14 +1,12 @@
 {
   "buildCommand": "echo 'Backend only'",
   "outputDirectory": ".",
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.ts"
-    }
-  ],
   "functions": {
     "api/index.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "api/trpc/[...trpc].ts": {
       "memory": 1024,
       "maxDuration": 30
     }
