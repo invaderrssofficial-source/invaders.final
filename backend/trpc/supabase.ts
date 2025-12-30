@@ -25,6 +25,14 @@ function getSupabaseClient(): SupabaseClient {
       autoRefreshToken: false,
       persistSession: false,
     },
+    global: {
+      fetch: (url, options = {}) => {
+        return fetch(url, {
+          ...options,
+          signal: AbortSignal.timeout(15000),
+        });
+      },
+    },
   });
   
   console.log("[Supabase] Client initialized successfully");
