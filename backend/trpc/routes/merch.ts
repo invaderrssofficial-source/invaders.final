@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { createTRPCRouter, publicProcedure } from "../create-context";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../supabase";
 
 export const merchRouter = createTRPCRouter({
   getAll: publicProcedure.query(async () => {
