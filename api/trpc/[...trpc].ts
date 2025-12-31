@@ -25,10 +25,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const url = new URL(req.url || "/", `https://${req.headers.host}`);
     
+    let body: string | undefined;
+    if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
+      body = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+    }
+
     const fetchRequest = new Request(url.toString(), {
       method: req.method,
       headers: req.headers as HeadersInit,
-      body: req.method !== "GET" && req.method !== "HEAD" ? JSON.stringify(req.body) : undefined,
+      body,
     });
 
     const response = await fetchRequestHandler({
@@ -41,7 +46,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
-    const body = await response.text();
+    const responseBody = await response.text();
+    console.log("[tRPC] Response status:", response.status, "Body length:", responseBody.length);
     
     response.headers.forEach((value, key) => {
       if (key.toLowerCase() !== "content-length") {
@@ -49,7 +55,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     });
 
-    return res.status(response.status).send(body);
+    res.setHeader("Content-Type", "application/json");
+    return res.status(response.status).send(responseBody);
   } catch (error: any) {
     console.error("[tRPC] Handler error:", error);
     return res.status(500).json({ error: "Internal server error", message: error.message });
