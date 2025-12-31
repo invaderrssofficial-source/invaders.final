@@ -109,32 +109,32 @@ export const [AppContentProvider, useAppContent] = createContextHook(() => {
     },
   });
 
-  const addMerchItem = useCallback((item: Omit<MerchItem, 'id'>) => {
-    createMerchMutation.mutate(item);
+  const addMerchItem = useCallback(async (item: Omit<MerchItem, 'id'>) => {
+    await createMerchMutation.mutateAsync(item);
   }, [createMerchMutation]);
 
-  const updateMerchItem = useCallback((id: string, updates: Partial<MerchItem>) => {
-    updateMerchMutation.mutate({ id, ...updates });
+  const updateMerchItem = useCallback(async (id: string, updates: Partial<MerchItem>) => {
+    await updateMerchMutation.mutateAsync({ id, ...updates });
   }, [updateMerchMutation]);
 
-  const deleteMerchItem = useCallback((id: string) => {
-    deleteMerchMutation.mutate({ id });
+  const deleteMerchItem = useCallback(async (id: string) => {
+    await deleteMerchMutation.mutateAsync({ id });
   }, [deleteMerchMutation]);
 
-  const addHero = useCallback((hero: Omit<Hero, 'id'>) => {
-    createHeroMutation.mutate(hero);
+  const addHero = useCallback(async (hero: Omit<Hero, 'id'>) => {
+    await createHeroMutation.mutateAsync(hero);
   }, [createHeroMutation]);
 
-  const updateHeroItem = useCallback((id: string, updates: Partial<Hero>) => {
-    updateHeroMutation.mutate({ id, ...updates });
+  const updateHeroItem = useCallback(async (id: string, updates: Partial<Hero>) => {
+    await updateHeroMutation.mutateAsync({ id, ...updates });
   }, [updateHeroMutation]);
 
-  const deleteHeroItem = useCallback((id: string) => {
-    deleteHeroMutation.mutate({ id });
+  const deleteHeroItem = useCallback(async (id: string) => {
+    await deleteHeroMutation.mutateAsync({ id });
   }, [deleteHeroMutation]);
 
-  const updateBankInfo = useCallback((info: BankTransferInfo) => {
-    updateSettingsMutation.mutate(info);
+  const updateBankInfo = useCallback(async (info: BankTransferInfo) => {
+    await updateSettingsMutation.mutateAsync(info);
   }, [updateSettingsMutation]);
 
   const merchItems = merchQuery.data && merchQuery.data.length > 0 
