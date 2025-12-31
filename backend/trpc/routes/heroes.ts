@@ -47,29 +47,34 @@ export const heroesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const { data, error } = await supabase
-        .from("heroes")
-        .insert({
-          name: input.name,
-          position: input.position,
-          number: input.number,
-          image: input.image,
-        })
-        .select()
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("heroes")
+          .insert({
+            name: input.name,
+            position: input.position,
+            number: input.number,
+            image: input.image,
+          })
+          .select()
+          .single();
 
-      if (error) {
-        console.log("Error creating hero:", error);
-        throw new Error(error.message);
+        if (error) {
+          console.error("[Heroes] Error creating hero:", error);
+          throw new Error(error.message);
+        }
+
+        return {
+          id: data.id,
+          name: data.name,
+          position: data.position,
+          number: data.number,
+          image: data.image,
+        };
+      } catch (error: any) {
+        console.error("[Heroes] Create mutation failed:", error);
+        throw new Error(error.message || 'Failed to create hero');
       }
-
-      return {
-        id: data.id,
-        name: data.name,
-        position: data.position,
-        number: data.number,
-        image: data.image,
-      };
     }),
 
   update: publicProcedure
@@ -83,27 +88,42 @@ export const heroesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const { id, ...updates } = input;
-      const { error } = await supabase.from("heroes").update(updates).eq("id", id);
+      try {
+        const { id, ...updates } = input;
+        const { data, error } = await supabase
+          .from("heroes")
+          .update(updates)
+          .eq("id", id)
+          .select()
+          .single();
 
-      if (error) {
-        console.log("Error updating hero:", error);
-        throw new Error(error.message);
+        if (error) {
+          console.error("[Heroes] Error updating hero:", error);
+          throw new Error(error.message);
+        }
+
+        return { success: true, data };
+      } catch (error: any) {
+        console.error("[Heroes] Update mutation failed:", error);
+        throw new Error(error.message || 'Failed to update hero');
       }
-
-      return { success: true };
     }),
 
   delete: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      const { error } = await supabase.from("heroes").delete().eq("id", input.id);
+      try {
+        const { error } = await supabase.from("heroes").delete().eq("id", input.id);
 
-      if (error) {
-        console.log("Error deleting hero:", error);
-        throw new Error(error.message);
+        if (error) {
+          console.error("[Heroes] Error deleting hero:", error);
+          throw new Error(error.message);
+        }
+
+        return { success: true };
+      } catch (error: any) {
+        console.error("[Heroes] Delete mutation failed:", error);
+        throw new Error(error.message || 'Failed to delete hero');
       }
-
-      return { success: true };
     }),
 });
