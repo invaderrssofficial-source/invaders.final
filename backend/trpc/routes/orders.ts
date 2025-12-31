@@ -114,29 +114,39 @@ export const ordersRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: input.status })
-        .eq("id", input.id);
+      try {
+        const { error } = await supabase
+          .from("orders")
+          .update({ status: input.status })
+          .eq("id", input.id);
 
-      if (error) {
-        console.log("Error updating order status:", error);
-        throw new Error(error.message);
+        if (error) {
+          console.error("[Orders] Error updating order status:", error);
+          throw new Error(error.message);
+        }
+
+        return { success: true };
+      } catch (error: any) {
+        console.error("[Orders] Update status mutation failed:", error);
+        throw new Error(error.message || 'Failed to update order status');
       }
-
-      return { success: true };
     }),
 
   delete: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      const { error } = await supabase.from("orders").delete().eq("id", input.id);
+      try {
+        const { error } = await supabase.from("orders").delete().eq("id", input.id);
 
-      if (error) {
-        console.log("Error deleting order:", error);
-        throw new Error(error.message);
+        if (error) {
+          console.error("[Orders] Error deleting order:", error);
+          throw new Error(error.message);
+        }
+
+        return { success: true };
+      } catch (error: any) {
+        console.error("[Orders] Delete mutation failed:", error);
+        throw new Error(error.message || 'Failed to delete order');
       }
-
-      return { success: true };
     }),
 });
