@@ -2,7 +2,7 @@ import { handle } from "hono/vercel";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
-export const maxDuration = 25;
+export const maxDuration = 30;
 
 const app = new Hono();
 

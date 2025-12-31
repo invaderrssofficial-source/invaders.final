@@ -22,6 +22,11 @@ function createSupabaseClient(): SupabaseClient {
     db: {
       schema: 'public',
     },
+    global: {
+      headers: {
+        'x-connection-timeout': '10000',
+      },
+    },
   });
 }
 

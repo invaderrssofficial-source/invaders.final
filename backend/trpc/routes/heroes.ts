@@ -14,7 +14,7 @@ export const heroesRouter = createTRPCRouter({
           .order("created_at", { ascending: true })
           .limit(100),
         new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Query timeout')), 3000)
+          setTimeout(() => reject(new Error('Query timeout')), 8000)
         )
       ]);
 

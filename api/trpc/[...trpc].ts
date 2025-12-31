@@ -6,7 +6,7 @@ import { cors } from "hono/cors";
 import { appRouter } from "../../backend/trpc/app-router";
 import { createContext } from "../../backend/trpc/create-context";
 
-export const maxDuration = 25;
+export const maxDuration = 30;
 
 const app = new Hono();
 
