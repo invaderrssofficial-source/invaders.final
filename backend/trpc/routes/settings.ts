@@ -47,33 +47,44 @@ export const settingsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const { data: existing } = await supabase
-        .from("settings")
-        .select("*")
-        .eq("key", "bank_transfer_info")
-        .single();
-
-      if (existing) {
-        const { error } = await supabase
+      try {
+        const { data: existing } = await supabase
           .from("settings")
-          .update({ value: input })
-          .eq("key", "bank_transfer_info");
+          .select("*")
+          .eq("key", "bank_transfer_info")
+          .single();
 
-        if (error) {
-          console.log("Error updating settings:", error);
-          throw new Error(error.message);
-        }
-      } else {
-        const { error } = await supabase
-          .from("settings")
-          .insert({ key: "bank_transfer_info", value: input });
+        if (existing) {
+          const { data, error } = await supabase
+            .from("settings")
+            .update({ value: input })
+            .eq("key", "bank_transfer_info")
+            .select()
+            .single();
 
-        if (error) {
-          console.log("Error creating settings:", error);
-          throw new Error(error.message);
+          if (error) {
+            console.error("[Settings] Error updating settings:", error);
+            throw new Error(error.message);
+          }
+
+          return { success: true, data: data.value };
+        } else {
+          const { data, error } = await supabase
+            .from("settings")
+            .insert({ key: "bank_transfer_info", value: input })
+            .select()
+            .single();
+
+          if (error) {
+            console.error("[Settings] Error creating settings:", error);
+            throw new Error(error.message);
+          }
+
+          return { success: true, data: data.value };
         }
+      } catch (error: any) {
+        console.error("[Settings] Mutation failed:", error);
+        throw new Error(error.message || 'Failed to update settings');
       }
-
-      return { success: true };
     }),
 });
