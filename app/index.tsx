@@ -44,7 +44,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import Colors from '@/constants/colors';
-import { useOrders } from '@/contexts/OrdersContext';
+import { useOrders, OrderItem } from '@/contexts/OrdersContext';
 import { useAppContent, MerchItem, Hero } from '@/contexts/AppContentContext';
 
 import AnimatedCard from '@/components/AnimatedCard';
@@ -87,9 +87,12 @@ export default function HomeScreen() {
   const [selectedMerch, setSelectedMerch] = useState<MerchItem | null>(null);
   const [orderName, setOrderName] = useState('');
   const [orderPhone, setOrderPhone] = useState('');
-  const [selectedSize, setSelectedSize] = useState('');
-  const [sleeveType, setSleeveType] = useState<'short' | 'long'>('short');
-  const [sizeCategory, setSizeCategory] = useState<'adult' | 'kids'>('adult');
+  const [cartItems, setCartItems] = useState<OrderItem[]>([]);
+  const [currentSize, setCurrentSize] = useState('');
+  const [currentSleeveType, setCurrentSleeveType] = useState<'short' | 'long'>('short');
+  const [currentSizeCategory, setCurrentSizeCategory] = useState<'adult' | 'kids'>('adult');
+  const [currentJerseyName, setCurrentJerseyName] = useState('');
+  const [currentQuantity, setCurrentQuantity] = useState(1);
   const [transferSlipUri, setTransferSlipUri] = useState<string | null>(null);
   const [copiedAccount, setCopiedAccount] = useState(false);
   const [showSizeGuide, setShowSizeGuide] = useState(true);
@@ -149,12 +152,59 @@ export default function HomeScreen() {
       setSelectedMerch(null);
       setOrderName('');
       setOrderPhone('');
-      setSelectedSize('');
-      setSizeCategory('adult');
-      setSleeveType('short');
+      setCartItems([]);
+      setCurrentSize('');
+      setCurrentSizeCategory('adult');
+      setCurrentSleeveType('short');
+      setCurrentJerseyName('');
+      setCurrentQuantity(1);
       setTransferSlipUri(null);
       setCopiedAccount(false);
     });
+  };
+
+  const handleAddToCart = () => {
+    if (!currentSize) {
+      Alert.alert('Missing Info', 'Please select a size');
+      return;
+    }
+    if (!currentJerseyName.trim()) {
+      Alert.alert('Missing Info', 'Please enter the name for the jersey');
+      return;
+    }
+    if (!selectedMerch) return;
+
+    const newItem: OrderItem = {
+      productName: selectedMerch.name,
+      productImage: selectedMerch.image,
+      price: selectedMerch.price,
+      size: currentSize,
+      sizeCategory: currentSizeCategory,
+      sleeveType: currentSleeveType,
+      jerseyName: currentJerseyName.trim(),
+      quantity: currentQuantity,
+    };
+
+    setCartItems([...cartItems, newItem]);
+    setCurrentSize('');
+    setCurrentSizeCategory('adult');
+    setCurrentSleeveType('short');
+    setCurrentJerseyName('');
+    setCurrentQuantity(1);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert('Added to Cart', `${newItem.jerseyName}'s jersey added to cart`);
+  };
+
+  const handleRemoveFromCart = (index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setCartItems(cartItems.filter((_, i) => i !== index));
+  };
+
+  const calculateTotal = () => {
+    return cartItems.reduce((total, item) => {
+      const price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
+      return total + (price * item.quantity);
+    }, 0);
   };
 
   const handleSubmitOrder = () => {
@@ -166,31 +216,26 @@ export default function HomeScreen() {
       Alert.alert('Missing Info', 'Please enter your phone number');
       return;
     }
-    if (!selectedSize) {
-      Alert.alert('Missing Info', 'Please select a size');
+    if (cartItems.length === 0) {
+      Alert.alert('Empty Cart', 'Please add at least one item to your cart');
       return;
     }
-    if (!selectedMerch) return;
     
+    const totalPrice = calculateTotal();
     addOrder({
-      productName: selectedMerch.name,
-      productImage: selectedMerch.image,
-      price: selectedMerch.price,
       customerName: orderName.trim(),
       customerPhone: orderPhone.trim(),
-      size: selectedSize,
-      sizeCategory,
-      sleeveType,
+      items: cartItems,
+      totalPrice: totalPrice.toFixed(2),
       transferSlipUri,
     });
     
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const sizeLabel = sizeCategory === 'kids' ? `Kids ${selectedSize}` : selectedSize;
-    const sleeveLabel = sleeveType === 'long' ? 'Long Sleeve' : 'Short Sleeve';
+    const itemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
     const transferInfo = transferSlipUri ? '\n\nTransfer slip attached.' : '';
     Alert.alert(
       'Order Submitted! 🎉',
-      `Thank you ${orderName}!\n\nYour order for ${selectedMerch?.name} (Size: ${sizeLabel}, ${sleeveLabel}) has been received.${transferInfo}\n\nWe will contact you at ${orderPhone} to confirm your order and payment.`,
+      `Thank you ${orderName}!\n\nYour order for ${itemsCount} item(s) has been received.${transferInfo}\n\nTotal: MVR ${totalPrice.toFixed(2)}\n\nWe will contact you at ${orderPhone} to confirm your order and payment.`,
       [{ text: 'OK', onPress: closeMerchModal }]
     );
   };
@@ -802,59 +847,59 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     style={[
                       styles.sizeCategoryButton,
-                      sizeCategory === 'adult' && styles.sizeCategoryButtonActive,
+                      currentSizeCategory === 'adult' && styles.sizeCategoryButtonActive,
                     ]}
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSizeCategory('adult');
-                      setSelectedSize('');
+                      setCurrentSizeCategory('adult');
+                      setCurrentSize('');
                     }}
                   >
                     <Text style={[
                       styles.sizeCategoryText,
-                      sizeCategory === 'adult' && styles.sizeCategoryTextActive,
+                      currentSizeCategory === 'adult' && styles.sizeCategoryTextActive,
                     ]}>Adult</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.sizeCategoryButton,
-                      sizeCategory === 'kids' && styles.sizeCategoryButtonActive,
+                      currentSizeCategory === 'kids' && styles.sizeCategoryButtonActive,
                     ]}
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSizeCategory('kids');
-                      setSelectedSize('');
+                      setCurrentSizeCategory('kids');
+                      setCurrentSize('');
                     }}
                   >
                     <Text style={[
                       styles.sizeCategoryText,
-                      sizeCategory === 'kids' && styles.sizeCategoryTextActive,
+                      currentSizeCategory === 'kids' && styles.sizeCategoryTextActive,
                     ]}>Kids</Text>
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.sizeGrid}>
-                  {(sizeCategory === 'adult' ? ADULT_SIZES : KIDS_SIZES).map((size) => (
+                  {(currentSizeCategory === 'adult' ? ADULT_SIZES : KIDS_SIZES).map((size) => (
                     <TouchableOpacity
                       key={size}
                       style={[
                         styles.sizeButton,
-                        selectedSize === size && styles.sizeButtonSelected,
+                        currentSize === size && styles.sizeButtonSelected,
                       ]}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setSelectedSize(size);
+                        setCurrentSize(size);
                       }}
                     >
                       <Text
                         style={[
                           styles.sizeButtonText,
-                          selectedSize === size && styles.sizeButtonTextSelected,
+                          currentSize === size && styles.sizeButtonTextSelected,
                         ]}
                       >
                         {size}
                       </Text>
-                      {selectedSize === size && (
+                      {currentSize === size && (
                         <View style={styles.sizeCheckmark}>
                           <Check size={10} color={Colors.background} />
                         </View>
@@ -870,35 +915,94 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     style={[
                       styles.sleeveButton,
-                      sleeveType === 'short' && styles.sleeveButtonActive,
+                      currentSleeveType === 'short' && styles.sleeveButtonActive,
                     ]}
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSleeveType('short');
+                      setCurrentSleeveType('short');
                     }}
                   >
                     <Text style={[
                       styles.sleeveButtonText,
-                      sleeveType === 'short' && styles.sleeveButtonTextActive,
+                      currentSleeveType === 'short' && styles.sleeveButtonTextActive,
                     ]}>Short Sleeve</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.sleeveButton,
-                      sleeveType === 'long' && styles.sleeveButtonActive,
+                      currentSleeveType === 'long' && styles.sleeveButtonActive,
                     ]}
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSleeveType('long');
+                      setCurrentSleeveType('long');
                     }}
                   >
                     <Text style={[
                       styles.sleeveButtonText,
-                      sleeveType === 'long' && styles.sleeveButtonTextActive,
+                      currentSleeveType === 'long' && styles.sleeveButtonTextActive,
                     ]}>Long Sleeve</Text>
                   </TouchableOpacity>
                 </View>
               </View>
+
+              <View style={styles.jerseyNameSection}>
+                <Text style={styles.sizeSectionTitle}>Jersey Name</Text>
+                <View style={styles.inputContainer}>
+                  <Shirt size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Name to print on jersey"
+                    placeholderTextColor={Colors.textMuted}
+                    value={currentJerseyName}
+                    onChangeText={setCurrentJerseyName}
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.addToCartButton,
+                  (!currentSize || !currentJerseyName.trim()) && styles.submitButtonDisabled,
+                ]}
+                onPress={handleAddToCart}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={[Colors.primary, Colors.primaryDark]}
+                  style={styles.submitButtonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <ShoppingBag size={18} color={Colors.textPrimary} />
+                  <Text style={styles.submitButtonText}>Add to Cart</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {cartItems.length > 0 && (
+                <View style={styles.cartSection}>
+                  <Text style={styles.cartTitle}>Cart ({cartItems.length} item{cartItems.length !== 1 ? 's' : ''})</Text>
+                  {cartItems.map((item, index) => (
+                    <View key={index} style={styles.cartItem}>
+                      <View style={styles.cartItemInfo}>
+                        <Text style={styles.cartItemName}>{item.jerseyName}</Text>
+                        <Text style={styles.cartItemDetails}>
+                          Size: {item.sizeCategory === 'kids' ? `Kids ${item.size}` : item.size} • {item.sleeveType === 'long' ? 'Long' : 'Short'} Sleeve
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.removeCartItemButton}
+                        onPress={() => handleRemoveFromCart(index)}
+                      >
+                        <X size={16} color={Colors.textMuted} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <View style={styles.cartTotal}>
+                    <Text style={styles.cartTotalLabel}>Total:</Text>
+                    <Text style={styles.cartTotalAmount}>MVR {calculateTotal().toFixed(2)}</Text>
+                  </View>
+                </View>
+              )}
 
               <View style={styles.orderForm}>
                 <Text style={styles.orderFormTitle}>Your Details</Text>
@@ -1027,7 +1131,7 @@ export default function HomeScreen() {
               <TouchableOpacity
                 style={[
                   styles.submitButton,
-                  (!orderName || !orderPhone || !selectedSize) && styles.submitButtonDisabled,
+                  (!orderName || !orderPhone || cartItems.length === 0) && styles.submitButtonDisabled,
                 ]}
                 onPress={handleSubmitOrder}
                 activeOpacity={0.8}
@@ -2086,6 +2190,83 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginTop: 10,
     lineHeight: 16,
+  },
+  jerseyNameSection: {
+    marginBottom: 22,
+  },
+  addToCartButton: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
+    marginBottom: 22,
+  },
+  cartSection: {
+    backgroundColor: Colors.backgroundElevated,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  cartTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: Colors.textPrimary,
+    marginBottom: 14,
+  },
+  cartItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  cartItemInfo: {
+    flex: 1,
+  },
+  cartItemName: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.textPrimary,
+    marginBottom: 4,
+  },
+  cartItemDetails: {
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  removeCartItemButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.backgroundCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  cartTotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  cartTotalLabel: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+  },
+  cartTotalAmount: {
+    fontSize: 20,
+    fontWeight: '800' as const,
+    color: Colors.primary,
   },
   
 });

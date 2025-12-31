@@ -2,6 +2,17 @@ import * as z from "zod";
 import { createTRPCRouter, publicProcedure } from "../create-context";
 import { supabase } from "../supabase";
 
+const orderItemSchema = z.object({
+  productName: z.string(),
+  productImage: z.string(),
+  price: z.string(),
+  size: z.string(),
+  sizeCategory: z.enum(["adult", "kids"]),
+  sleeveType: z.enum(["short", "long"]),
+  jerseyName: z.string(),
+  quantity: z.number(),
+});
+
 export const ordersRouter = createTRPCRouter({
   getAll: publicProcedure.query(async () => {
     try {
@@ -26,14 +37,10 @@ export const ordersRouter = createTRPCRouter({
       console.log("[Orders] Successfully fetched", data?.length ?? 0, "orders");
       return (data ?? []).map((order: any) => ({
         id: order.id,
-        productName: order.product_name,
-        productImage: order.product_image,
-        price: order.price,
         customerName: order.customer_name,
         customerPhone: order.customer_phone,
-        size: order.size,
-        sizeCategory: order.size_category,
-        sleeveType: order.sleeve_type || 'short',
+        items: order.items || [],
+        totalPrice: order.total_price,
         transferSlipUri: order.transfer_slip_uri,
         status: order.status,
         createdAt: order.created_at,
@@ -47,14 +54,10 @@ export const ordersRouter = createTRPCRouter({
   create: publicProcedure
     .input(
       z.object({
-        productName: z.string(),
-        productImage: z.string(),
-        price: z.string(),
         customerName: z.string(),
         customerPhone: z.string(),
-        size: z.string(),
-        sizeCategory: z.enum(["adult", "kids"]),
-        sleeveType: z.enum(["short", "long"]),
+        items: z.array(orderItemSchema),
+        totalPrice: z.string(),
         transferSlipUri: z.string().nullable(),
       })
     )
@@ -66,14 +69,10 @@ export const ordersRouter = createTRPCRouter({
           supabase
             .from("orders")
             .insert({
-              product_name: input.productName,
-              product_image: input.productImage,
-              price: input.price,
               customer_name: input.customerName,
               customer_phone: input.customerPhone,
-              size: input.size,
-              size_category: input.sizeCategory,
-              sleeve_type: input.sleeveType,
+              items: input.items,
+              total_price: input.totalPrice,
               transfer_slip_uri: input.transferSlipUri,
               status: "pending",
             })
@@ -92,14 +91,10 @@ export const ordersRouter = createTRPCRouter({
         console.log("[Orders] Order created successfully:", data.id);
         return {
           id: data.id,
-          productName: data.product_name,
-          productImage: data.product_image,
-          price: data.price,
           customerName: data.customer_name,
           customerPhone: data.customer_phone,
-          size: data.size,
-          sizeCategory: data.size_category,
-          sleeveType: data.sleeve_type || 'short',
+          items: data.items,
+          totalPrice: data.total_price,
           transferSlipUri: data.transfer_slip_uri,
           status: data.status,
           createdAt: data.created_at,

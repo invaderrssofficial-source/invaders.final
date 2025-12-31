@@ -347,17 +347,21 @@ export default function AdminScreen() {
         delivered: 'Delivered',
         cancelled: 'Cancelled',
       };
-      const sizeLabel = order.sizeCategory === 'kids' ? `Kids ${order.size}` : order.size;
-      const sleeveLabel = order.sleeveType === 'long' ? 'Long Sleeve' : 'Short Sleeve';
       const status = order.status as Order['status'];
+      const itemsCount = order.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+      const itemsList = order.items.map((item: any) => {
+        const sizeLabel = item.sizeCategory === 'kids' ? `Kids ${item.size}` : item.size;
+        const sleeveLabel = item.sleeveType === 'long' ? 'Long' : 'Short';
+        return `${item.jerseyName} (${sizeLabel}, ${sleeveLabel})`;
+      }).join(', ');
+      
       return `
         <tr>
-          <td>${order.productName}</td>
           <td>${order.customerName}</td>
           <td>${order.customerPhone}</td>
-          <td>${sizeLabel}</td>
-          <td>${sleeveLabel}</td>
-          <td>${order.price}</td>
+          <td>${itemsCount} item(s)</td>
+          <td>${itemsList}</td>
+          <td>MVR ${order.totalPrice}</td>
           <td>${statusLabels[status]}</td>
           <td>${formatDate(order.createdAt)}</td>
         </tr>
@@ -416,12 +420,11 @@ export default function AdminScreen() {
     <table>
       <thead>
         <tr>
-          <th>Product</th>
           <th>Customer</th>
           <th>Phone</th>
-          <th>Size</th>
-          <th>Sleeve</th>
-          <th>Price</th>
+          <th>Items</th>
+          <th>Details</th>
+          <th>Total</th>
           <th>Status</th>
           <th>Date</th>
         </tr>
@@ -607,17 +610,22 @@ export default function AdminScreen() {
         ) : (
           orders.map((order) => {
             const statusConfig = STATUS_CONFIG[order.status as Order['status']];
+            const itemsCount = order.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+            const firstItem = order.items[0];
+            
             return (
               <View key={order.id} style={styles.orderCard}>
                 <View style={styles.orderHeader}>
                   <View style={styles.orderProduct}>
-                    <Image
-                      source={{ uri: order.productImage }}
-                      style={styles.productImage}
-                    />
+                    {firstItem && (
+                      <Image
+                        source={{ uri: firstItem.productImage }}
+                        style={styles.productImage}
+                      />
+                    )}
                     <View style={styles.productInfo}>
-                      <Text style={styles.productName}>{order.productName}</Text>
-                      <Text style={styles.productPrice}>{order.price}</Text>
+                      <Text style={styles.productName}>{itemsCount} item(s)</Text>
+                      <Text style={styles.productPrice}>MVR {order.totalPrice}</Text>
                     </View>
                   </View>
                   <TouchableOpacity
@@ -643,18 +651,14 @@ export default function AdminScreen() {
                     <Phone size={14} color={Colors.textMuted} />
                     <Text style={styles.detailText}>{order.customerPhone}</Text>
                   </View>
-                  <View style={styles.detailRow}>
-                    <Shirt size={14} color={Colors.textMuted} />
-                    <Text style={styles.detailText}>
-                      Size: {order.sizeCategory === 'kids' ? `Kids ${order.size}` : order.size}
-                    </Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Shirt size={14} color={Colors.textMuted} />
-                    <Text style={styles.detailText}>
-                      Sleeve: {order.sleeveType === 'long' ? 'Long Sleeve' : 'Short Sleeve'}
-                    </Text>
-                  </View>
+                  {order.items.map((item: any, index: number) => (
+                    <View key={index} style={styles.detailRow}>
+                      <Shirt size={14} color={Colors.textMuted} />
+                      <Text style={styles.detailText}>
+                        {item.jerseyName} - {item.sizeCategory === 'kids' ? `Kids ${item.size}` : item.size}, {item.sleeveType === 'long' ? 'Long' : 'Short'} Sleeve
+                      </Text>
+                    </View>
+                  ))}
                 </View>
 
                 {order.transferSlipUri && (

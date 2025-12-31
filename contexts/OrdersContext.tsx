@@ -3,16 +3,23 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useQueryClient } from '@tanstack/react-query';
 import { trpc } from '@/lib/trpc';
 
-export interface Order {
-  id: string;
+export interface OrderItem {
   productName: string;
   productImage: string;
   price: string;
-  customerName: string;
-  customerPhone: string;
   size: string;
   sizeCategory: 'adult' | 'kids';
   sleeveType: 'short' | 'long';
+  jerseyName: string;
+  quantity: number;
+}
+
+export interface Order {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  items: OrderItem[];
+  totalPrice: string;
   transferSlipUri: string | null;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
