@@ -83,25 +83,24 @@ export const merchRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      try {
-        const { id, ...updates } = input;
-        const { data, error } = await supabase
-          .from("merch_items")
-          .update(updates)
-          .eq("id", id)
-          .select()
-          .single();
+      console.log("[Merch] Updating merch item:", input.id);
+      const { id, ...updates } = input;
+      
+      const result = await supabase
+        .from("merch_items")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
 
-        if (error) {
-          console.error("[Merch] Error updating merch item:", error);
-          throw new Error(error.message);
-        }
+      console.log("[Merch] Update result:", JSON.stringify(result));
 
-        return { success: true, data };
-      } catch (error: any) {
-        console.error("[Merch] Update mutation failed:", error);
-        throw new Error(error.message || 'Failed to update merchandise');
+      if (result.error) {
+        console.error("[Merch] Error updating merch item:", result.error.message);
+        throw new Error(result.error.message);
       }
+
+      return { success: true, data: result.data };
     }),
 
   delete: publicProcedure
