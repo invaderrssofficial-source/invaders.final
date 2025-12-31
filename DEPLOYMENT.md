@@ -1,6 +1,19 @@
-# Vercel Deployment Guide
+# Deployment Guide
 
-This guide will walk you through deploying your React Native backend API to Vercel.
+## Architecture Overview
+
+**Vercel** (Frontend + API) + **Supabase** (Database)
+
+- ✅ **Vercel** hosts:
+  - Web app (Expo web build)
+  - API endpoints (/api/trpc/*)
+- ✅ **Supabase** provides:
+  - PostgreSQL database
+  - Real-time subscriptions
+  - Authentication (if needed)
+  - Row Level Security
+
+This guide will walk you through deploying your complete app to Vercel with Supabase as the database.
 
 ## Prerequisites
 
@@ -18,10 +31,11 @@ npm i -g vercel
 ## Step 2: Prepare Your Project
 
 Your project is already configured with:
-- ✅ `vercel.json` - Vercel configuration
+- ✅ `vercel.json` - Builds Expo web app + API functions
 - ✅ `api/trpc/[...trpc].ts` - API handler
 - ✅ Backend code in `backend/` folder
 - ✅ CORS headers configured
+- ✅ Supabase integration in `backend/trpc/supabase.ts`
 
 ## Step 3: Deploy to Vercel
 
@@ -31,8 +45,8 @@ Your project is already configured with:
 2. Import your Git repository (GitHub, GitLab, or Bitbucket)
 3. Configure your project:
    - **Framework Preset**: Other
-   - **Build Command**: Leave as `vercel build` (or use the one from vercel.json)
-   - **Output Directory**: `.` (root)
+   - **Build Command**: Will use the one from vercel.json (`npx expo export -p web`)
+   - **Output Directory**: `dist` (configured in vercel.json)
    - **Install Command**: `npm install` or `bun install`
 
 4. Add Environment Variables (click "Environment Variables"):
@@ -102,7 +116,13 @@ You need to set these environment variables in Vercel:
 
 After deployment, you'll get a URL like `https://your-project.vercel.app`
 
-Test your API endpoints:
+### Test the Web App:
+
+1. Visit `https://your-project.vercel.app`
+2. You should see your React Native web app
+3. All features should work (it fetches data from the API on the same domain)
+
+### Test API endpoints:
 
 ### 1. Test Heroes endpoint:
 ```bash
@@ -136,23 +156,29 @@ curl https://your-project.vercel.app/api/trpc/merch.getAll
 curl https://your-project.vercel.app/api/trpc/orders.getAll
 ```
 
-## Step 6: Update Your Frontend
+## Step 6: Update Mobile App to Use Production API
 
-Update your frontend to use the production API:
+For the **mobile app** (iOS/Android), update the API URL to point to your Vercel deployment:
 
-In your React Native app (or wherever you initialize tRPC client), update the API URL:
+### Option A: Using Environment Variable (Recommended)
 
+1. Add to your local `.env` or set in Expo:
+   ```
+   EXPO_PUBLIC_API_URL=https://your-project.vercel.app/api/trpc
+   ```
+
+2. Your `lib/trpc.ts` should already handle this
+
+### Option B: Direct Update
+
+Update `lib/trpc.ts`:
 ```typescript
-// lib/trpc.ts or where you initialize tRPC
 const API_URL = __DEV__ 
   ? 'http://localhost:3000/api/trpc' 
   : 'https://your-project.vercel.app/api/trpc';
 ```
 
-Or set it via environment variable:
-```typescript
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://your-project.vercel.app/api/trpc';
-```
+**Note**: The web app automatically uses relative URLs (`/api/trpc`), so it works without changes.
 
 ## Troubleshooting
 
@@ -222,14 +248,16 @@ Monitor your API:
 
 Before going live:
 
-- [ ] All environment variables are set
-- [ ] Test all API endpoints
+- [ ] All environment variables are set in Vercel
+- [ ] Web app loads at `https://your-project.vercel.app`
+- [ ] Test all API endpoints work
+- [ ] Mobile app points to production API URL
 - [ ] Supabase Row Level Security (RLS) is configured
+- [ ] Database has proper indexes for performance
 - [ ] API rate limiting is considered (if needed)
-- [ ] Error logging is set up
-- [ ] Database has proper indexes
-- [ ] Frontend points to production API
+- [ ] Error logging/monitoring is set up
 - [ ] Test on real devices (iOS & Android)
+- [ ] Test web app on different browsers
 - [ ] Monitor for first 24-48 hours after launch
 
 ## Support
@@ -265,10 +293,20 @@ vercel env pull
 
 ---
 
-**Your API Endpoints after deployment:**
+**Your Deployment URLs:**
 
-- Heroes: `https://your-project.vercel.app/api/trpc/heroes.getAll`
-- Merch: `https://your-project.vercel.app/api/trpc/merch.getAll`
-- Orders: `https://your-project.vercel.app/api/trpc/orders.getAll`
+- **Web App**: `https://your-project.vercel.app`
+- **API Base**: `https://your-project.vercel.app/api/trpc`
+- **Heroes**: `https://your-project.vercel.app/api/trpc/heroes.getAll`
+- **Merch**: `https://your-project.vercel.app/api/trpc/merch.getAll`
+- **Orders**: `https://your-project.vercel.app/api/trpc/orders.getAll`
 
 Replace `your-project.vercel.app` with your actual Vercel deployment URL.
+
+## Summary
+
+✅ **Vercel** hosts everything (web app + API)
+✅ **Supabase** handles all data storage
+✅ Web app works at the root URL
+✅ API works at `/api/trpc`
+✅ Mobile apps connect to the same API

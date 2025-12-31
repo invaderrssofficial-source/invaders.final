@@ -1,6 +1,6 @@
 {
-  "buildCommand": "echo 'Backend only'",
-  "outputDirectory": ".",
+  "buildCommand": "npx expo export -p web",
+  "outputDirectory": "dist",
   "functions": {
     "api/**/*.ts": {
       "maxDuration": 25
