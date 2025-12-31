@@ -207,7 +207,7 @@ export default function HomeScreen() {
     }, 0);
   };
 
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = async () => {
     if (!orderName.trim()) {
       Alert.alert('Missing Info', 'Please enter your name');
       return;
@@ -221,23 +221,32 @@ export default function HomeScreen() {
       return;
     }
     
-    const totalPrice = calculateTotal();
-    addOrder({
-      customerName: orderName.trim(),
-      customerPhone: orderPhone.trim(),
-      items: cartItems,
-      totalPrice: totalPrice.toFixed(2),
-      transferSlipUri,
-    });
-    
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const itemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    const transferInfo = transferSlipUri ? '\n\nTransfer slip attached.' : '';
-    Alert.alert(
-      'Order Submitted! 🎉',
-      `Thank you ${orderName}!\n\nYour order for ${itemsCount} item(s) has been received.${transferInfo}\n\nTotal: MVR ${totalPrice.toFixed(2)}\n\nWe will contact you at ${orderPhone} to confirm your order and payment.`,
-      [{ text: 'OK', onPress: closeMerchModal }]
-    );
+    try {
+      const totalPrice = calculateTotal();
+      await addOrder({
+        customerName: orderName.trim(),
+        customerPhone: orderPhone.trim(),
+        items: cartItems,
+        totalPrice: totalPrice.toFixed(2),
+        transferSlipUri,
+      });
+      
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const itemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+      const transferInfo = transferSlipUri ? '\n\nTransfer slip attached.' : '';
+      Alert.alert(
+        'Order Submitted! 🎉',
+        `Thank you ${orderName}!\n\nYour order for ${itemsCount} item(s) has been received.${transferInfo}\n\nTotal: MVR ${totalPrice.toFixed(2)}\n\nWe will contact you at ${orderPhone} to confirm your order and payment.`,
+        [{ text: 'OK', onPress: closeMerchModal }]
+      );
+    } catch (error: any) {
+      console.error('Order submission error:', error);
+      Alert.alert(
+        'Order Failed',
+        'Failed to submit order. Please try again or contact us directly.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const scrollIndicatorOpacity = scrollY.interpolate({
