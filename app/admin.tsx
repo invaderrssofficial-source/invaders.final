@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Modal,
   Platform,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,11 +39,15 @@ import {
   Hash,
   DollarSign,
   Link,
+  LogOut,
+  Mail,
+  Lock,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useOrders, Order } from '@/contexts/OrdersContext';
 import { useAppContent, MerchItem, Hero } from '@/contexts/AppContentContext';
+import { supabase } from '@/lib/supabase';
 
 const { width } = Dimensions.get('window');
 
@@ -74,6 +79,12 @@ export default function AdminScreen() {
     deleteHero,
   } = useAppContent();
   
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  
   const [activeTab, setActiveTab] = useState<TabType>('orders');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -93,6 +104,72 @@ export default function AdminScreen() {
   const [heroNumber, setHeroNumber] = useState('');
   const [heroPosition, setHeroPosition] = useState('');
   const [heroImage, setHeroImage] = useState('');
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    } catch (error) {
+      console.error('Auth check error:', error);
+      setIsAuthenticated(false);
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Missing Info', 'Please enter email and password');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
+      });
+
+      if (error) {
+        Alert.alert('Login Failed', error.message);
+        return;
+      }
+
+      if (data.session) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setIsAuthenticated(true);
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to login');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await supabase.auth.signOut();
+            setIsAuthenticated(false);
+            setEmail('');
+            setPassword('');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          },
+        },
+      ]
+    );
+  };
 
   const handleStatusChange = (orderId: string, status: Order['status']) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -402,6 +479,97 @@ export default function AdminScreen() {
     }
   };
 
+  if (isCheckingAuth) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <LinearGradient
+          colors={[Colors.background, '#0a0a0a']}
+          style={StyleSheet.absoluteFill}
+        />
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Checking authentication...</Text>
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <LinearGradient
+          colors={[Colors.background, '#0a0a0a']}
+          style={StyleSheet.absoluteFill}
+        />
+        
+        <View style={styles.loginContainer}>
+          <View style={styles.loginHeader}>
+            <View style={styles.lockIconContainer}>
+              <Lock size={32} color={Colors.primary} />
+            </View>
+            <Text style={styles.loginTitle}>Admin Login</Text>
+            <Text style={styles.loginSubtitle}>Sign in to access the admin panel</Text>
+          </View>
+
+          <View style={styles.loginForm}>
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <Mail size={16} color={Colors.textMuted} />
+                <Text style={styles.inputLabelText}>Email</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="admin@example.com"
+                placeholderTextColor={Colors.textMuted}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                editable={!isLoggingIn}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <Lock size={16} color={Colors.textMuted} />
+                <Text style={styles.inputLabelText}>Password</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                placeholderTextColor={Colors.textMuted}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                editable={!isLoggingIn}
+                onSubmitEditing={handleLogin}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.loginButton, isLoggingIn && styles.loginButtonDisabled]}
+              onPress={handleLogin}
+              disabled={isLoggingIn}
+            >
+              {isLoggingIn ? (
+                <ActivityIndicator size="small" color={Colors.textPrimary} />
+              ) : (
+                <Text style={styles.loginButtonText}>Sign In</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.backButtonLogin}
+              onPress={() => router.back()}
+              disabled={isLoggingIn}
+            >
+              <ArrowLeft size={16} color={Colors.textMuted} />
+              <Text style={styles.backButtonLoginText}>Back to Home</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   const renderOrdersTab = () => (
     <>
       <View style={styles.statsRow}>
@@ -632,16 +800,22 @@ export default function AdminScreen() {
           <Package size={24} color={Colors.primary} />
           <Text style={styles.headerTitle}>Admin Panel</Text>
         </View>
-        {activeTab === 'orders' ? (
+        <View style={styles.headerActions}>
+          {activeTab === 'orders' && (
+            <TouchableOpacity
+              style={styles.exportButton}
+              onPress={() => setShowExportModal(true)}
+            >
+              <Download size={20} color={Colors.primary} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
-            style={styles.exportButton}
-            onPress={() => setShowExportModal(true)}
+            style={styles.logoutButton}
+            onPress={handleLogout}
           >
-            <Download size={20} color={Colors.primary} />
+            <LogOut size={20} color="#EF4444" />
           </TouchableOpacity>
-        ) : (
-          <View style={styles.headerRight} />
-        )}
+        </View>
       </View>
 
       <View style={styles.tabBar}>
@@ -997,6 +1171,77 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: Colors.textMuted,
+  },
+  loginContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  loginHeader: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  lockIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  loginTitle: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    color: Colors.textPrimary,
+    marginBottom: 8,
+  },
+  loginSubtitle: {
+    fontSize: 15,
+    color: Colors.textMuted,
+    textAlign: 'center',
+  },
+  loginForm: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+  },
+  loginButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  loginButtonDisabled: {
+    opacity: 0.6,
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.textPrimary,
+  },
+  backButtonLogin: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    gap: 6,
+  },
+  backButtonLoginText: {
+    fontSize: 14,
+    color: Colors.textMuted,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1026,8 +1271,29 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: Colors.textPrimary,
   },
-  headerRight: {
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  exportButton: {
     width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.backgroundElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  logoutButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.2)',
   },
   tabBar: {
     flexDirection: 'row',
@@ -1358,16 +1624,6 @@ const styles = StyleSheet.create({
   fullImage: {
     width: width - 32,
     height: '70%',
-  },
-  exportButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.backgroundElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   exportModalContent: {
     width: width - 48,
