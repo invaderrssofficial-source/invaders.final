@@ -92,6 +92,7 @@ export default function HomeScreen() {
   const [currentSleeveType, setCurrentSleeveType] = useState<'short' | 'long'>('short');
   const [currentSizeCategory, setCurrentSizeCategory] = useState<'adult' | 'kids'>('adult');
   const [currentJerseyName, setCurrentJerseyName] = useState('');
+  const [currentJerseyNumber, setCurrentJerseyNumber] = useState('');
   const [currentQuantity, setCurrentQuantity] = useState(1);
   const [transferSlipUri, setTransferSlipUri] = useState<string | null>(null);
   const [copiedAccount, setCopiedAccount] = useState(false);
@@ -157,6 +158,7 @@ export default function HomeScreen() {
       setCurrentSizeCategory('adult');
       setCurrentSleeveType('short');
       setCurrentJerseyName('');
+      setCurrentJerseyNumber('');
       setCurrentQuantity(1);
       setTransferSlipUri(null);
       setCopiedAccount(false);
@@ -172,6 +174,10 @@ export default function HomeScreen() {
       Alert.alert('Missing Info', 'Please enter the name for the jersey');
       return;
     }
+    if (!currentJerseyNumber.trim()) {
+      Alert.alert('Missing Info', 'Please enter the jersey number');
+      return;
+    }
     if (!selectedMerch) return;
 
     const newItem: OrderItem = {
@@ -182,6 +188,7 @@ export default function HomeScreen() {
       sizeCategory: currentSizeCategory,
       sleeveType: currentSleeveType,
       jerseyName: currentJerseyName.trim(),
+      jerseyNumber: currentJerseyNumber.trim(),
       quantity: currentQuantity,
     };
 
@@ -190,9 +197,10 @@ export default function HomeScreen() {
     setCurrentSizeCategory('adult');
     setCurrentSleeveType('short');
     setCurrentJerseyName('');
+    setCurrentJerseyNumber('');
     setCurrentQuantity(1);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert('Added to Cart', `${newItem.jerseyName}'s jersey added to cart`);
+    Alert.alert('Added to Cart', `${newItem.jerseyName} #${newItem.jerseyNumber} added to cart`);
   };
 
   const handleRemoveFromCart = (index: number) => {
@@ -715,9 +723,17 @@ export default function HomeScreen() {
                   <Shirt size={20} color={Colors.primary} />
                   <Text style={styles.modalTitle}>{selectedMerch?.name}</Text>
                 </View>
-                <TouchableOpacity onPress={closeMerchModal} style={styles.closeButton}>
-                  <X size={22} color={Colors.textSecondary} />
-                </TouchableOpacity>
+                <View style={styles.modalHeaderRight}>
+                  {cartItems.length > 0 && (
+                    <View style={styles.cartBadge}>
+                      <ShoppingBag size={16} color={Colors.textPrimary} />
+                      <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity onPress={closeMerchModal} style={styles.closeButton}>
+                    <X size={22} color={Colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <View style={styles.modalProductPreview}>
@@ -946,9 +962,9 @@ export default function HomeScreen() {
               </View>
 
               <View style={styles.jerseyNameSection}>
-                <Text style={styles.sizeSectionTitle}>Jersey Name</Text>
+                <Text style={styles.sizeSectionTitle}>Jersey Details</Text>
                 <View style={styles.inputContainer}>
-                  <Shirt size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                  <User size={18} color={Colors.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Name to print on jersey"
@@ -957,12 +973,24 @@ export default function HomeScreen() {
                     onChangeText={setCurrentJerseyName}
                   />
                 </View>
+                <View style={styles.inputContainer}>
+                  <Shirt size={18} color={Colors.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Jersey number (e.g., 10)"
+                    placeholderTextColor={Colors.textMuted}
+                    value={currentJerseyNumber}
+                    onChangeText={setCurrentJerseyNumber}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                  />
+                </View>
               </View>
 
               <TouchableOpacity
                 style={[
                   styles.addToCartButton,
-                  (!currentSize || !currentJerseyName.trim()) && styles.submitButtonDisabled,
+                  (!currentSize || !currentJerseyName.trim() || !currentJerseyNumber.trim()) && styles.submitButtonDisabled,
                 ]}
                 onPress={handleAddToCart}
                 activeOpacity={0.8}
@@ -984,7 +1012,7 @@ export default function HomeScreen() {
                   {cartItems.map((item, index) => (
                     <View key={index} style={styles.cartItem}>
                       <View style={styles.cartItemInfo}>
-                        <Text style={styles.cartItemName}>{item.jerseyName}</Text>
+                        <Text style={styles.cartItemName}>{item.jerseyName} #{item.jerseyNumber}</Text>
                         <Text style={styles.cartItemDetails}>
                           Size: {item.sizeCategory === 'kids' ? `Kids ${item.size}` : item.size} • {item.sleeveType === 'long' ? 'Long' : 'Short'} Sleeve
                         </Text>
@@ -1809,6 +1837,12 @@ const styles = StyleSheet.create({
   modalHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  modalHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   modalTitle: {
     fontSize: 20,
@@ -2209,8 +2243,32 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     marginBottom: 22,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  cartBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 6,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cartBadgeText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: Colors.textPrimary,
   },
   cartTitle: {
     fontSize: 15,

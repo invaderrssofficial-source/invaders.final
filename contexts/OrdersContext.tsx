@@ -11,6 +11,7 @@ export interface OrderItem {
   sizeCategory: 'adult' | 'kids';
   sleeveType: 'short' | 'long';
   jerseyName: string;
+  jerseyNumber: string;
   quantity: number;
 }
 

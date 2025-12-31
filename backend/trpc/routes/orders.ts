@@ -10,6 +10,7 @@ const orderItemSchema = z.object({
   sizeCategory: z.enum(["adult", "kids"]),
   sleeveType: z.enum(["short", "long"]),
   jerseyName: z.string(),
+  jerseyNumber: z.string(),
   quantity: z.number(),
 });
 
