@@ -180,11 +180,15 @@ export default function AdminScreen() {
     );
   };
 
-  const handleStatusChange = (orderId: string, status: Order['status']) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    updateOrderStatus(orderId, status);
-    setShowStatusModal(false);
-    setSelectedOrder(null);
+  const handleStatusChange = async (orderId: string, status: Order['status']) => {
+    try {
+      await updateOrderStatus(orderId, status);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setShowStatusModal(false);
+      setSelectedOrder(null);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update order status');
+    }
   };
 
   const handleDeleteOrder = (orderId: string) => {
@@ -235,29 +239,32 @@ export default function AdminScreen() {
     setShowMerchModal(true);
   };
 
-  const handleSaveMerch = () => {
+  const handleSaveMerch = async () => {
     if (!merchName.trim() || !merchPrice.trim() || !merchImage.trim()) {
       Alert.alert('Missing Info', 'Please fill in all fields');
       return;
     }
     
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    if (editingMerch) {
-      updateMerchItem(editingMerch.id, {
-        name: merchName.trim(),
-        price: merchPrice.trim(),
-        image: merchImage.trim(),
-      });
-    } else {
-      addMerchItem({
-        name: merchName.trim(),
-        price: merchPrice.trim(),
-        image: merchImage.trim(),
-      });
+    try {
+      if (editingMerch) {
+        await updateMerchItem(editingMerch.id, {
+          name: merchName.trim(),
+          price: merchPrice.trim(),
+          image: merchImage.trim(),
+        });
+      } else {
+        await addMerchItem({
+          name: merchName.trim(),
+          price: merchPrice.trim(),
+          image: merchImage.trim(),
+        });
+      }
+      
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowMerchModal(false);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to save merchandise');
     }
-    
-    setShowMerchModal(false);
   };
 
   const handleDeleteMerch = (id: string) => {
@@ -296,31 +303,34 @@ export default function AdminScreen() {
     setShowHeroModal(true);
   };
 
-  const handleSaveHero = () => {
+  const handleSaveHero = async () => {
     if (!heroName.trim() || !heroNumber.trim() || !heroPosition.trim() || !heroImage.trim()) {
       Alert.alert('Missing Info', 'Please fill in all fields');
       return;
     }
     
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    if (editingHero) {
-      updateHero(editingHero.id, {
-        name: heroName.trim(),
-        number: heroNumber.trim(),
-        position: heroPosition.trim(),
-        image: heroImage.trim(),
-      });
-    } else {
-      addHero({
-        name: heroName.trim(),
-        number: heroNumber.trim(),
-        position: heroPosition.trim(),
-        image: heroImage.trim(),
-      });
+    try {
+      if (editingHero) {
+        await updateHero(editingHero.id, {
+          name: heroName.trim(),
+          number: heroNumber.trim(),
+          position: heroPosition.trim(),
+          image: heroImage.trim(),
+        });
+      } else {
+        await addHero({
+          name: heroName.trim(),
+          number: heroNumber.trim(),
+          position: heroPosition.trim(),
+          image: heroImage.trim(),
+        });
+      }
+      
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowHeroModal(false);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to save hero');
     }
-    
-    setShowHeroModal(false);
   };
 
   const handleDeleteHero = (id: string) => {
@@ -348,19 +358,24 @@ export default function AdminScreen() {
     setShowSettingsModal(true);
   };
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     if (!bankName.trim() || !accountName.trim() || !accountNumber.trim()) {
       Alert.alert('Missing Info', 'Please fill in all fields');
       return;
     }
     
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    updateBankInfo({
-      bankName: bankName.trim(),
-      accountName: accountName.trim(),
-      accountNumber: accountNumber.trim(),
-    });
-    setShowSettingsModal(false);
+    try {
+      await updateBankInfo({
+        bankName: bankName.trim(),
+        accountName: accountName.trim(),
+        accountNumber: accountNumber.trim(),
+      });
+      
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowSettingsModal(false);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to save bank information');
+    }
   };
 
   const generateOrdersHTML = () => {
