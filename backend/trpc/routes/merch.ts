@@ -45,27 +45,32 @@ export const merchRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const { data, error } = await supabase
-        .from("merch_items")
-        .insert({
-          name: input.name,
-          price: input.price,
-          image: input.image,
-        })
-        .select()
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("merch_items")
+          .insert({
+            name: input.name,
+            price: input.price,
+            image: input.image,
+          })
+          .select()
+          .single();
 
-      if (error) {
-        console.log("Error creating merch item:", error);
-        throw new Error(error.message);
+        if (error) {
+          console.error("[Merch] Error creating merch item:", error);
+          throw new Error(error.message);
+        }
+
+        return {
+          id: data.id,
+          name: data.name,
+          price: data.price,
+          image: data.image,
+        };
+      } catch (error: any) {
+        console.error("[Merch] Create mutation failed:", error);
+        throw new Error(error.message || 'Failed to create merchandise');
       }
-
-      return {
-        id: data.id,
-        name: data.name,
-        price: data.price,
-        image: data.image,
-      };
     }),
 
   update: publicProcedure
@@ -78,27 +83,42 @@ export const merchRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const { id, ...updates } = input;
-      const { error } = await supabase.from("merch_items").update(updates).eq("id", id);
+      try {
+        const { id, ...updates } = input;
+        const { data, error } = await supabase
+          .from("merch_items")
+          .update(updates)
+          .eq("id", id)
+          .select()
+          .single();
 
-      if (error) {
-        console.log("Error updating merch item:", error);
-        throw new Error(error.message);
+        if (error) {
+          console.error("[Merch] Error updating merch item:", error);
+          throw new Error(error.message);
+        }
+
+        return { success: true, data };
+      } catch (error: any) {
+        console.error("[Merch] Update mutation failed:", error);
+        throw new Error(error.message || 'Failed to update merchandise');
       }
-
-      return { success: true };
     }),
 
   delete: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      const { error } = await supabase.from("merch_items").delete().eq("id", input.id);
+      try {
+        const { error } = await supabase.from("merch_items").delete().eq("id", input.id);
 
-      if (error) {
-        console.log("Error deleting merch item:", error);
-        throw new Error(error.message);
+        if (error) {
+          console.error("[Merch] Error deleting merch item:", error);
+          throw new Error(error.message);
+        }
+
+        return { success: true };
+      } catch (error: any) {
+        console.error("[Merch] Delete mutation failed:", error);
+        throw new Error(error.message || 'Failed to delete merchandise');
       }
-
-      return { success: true };
     }),
 });
