@@ -1,20 +1,27 @@
-import { handle } from "hono/vercel";
-import { Hono } from "hono";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-export const maxDuration = 30;
+export const config = {
+  maxDuration: 10,
+};
 
-const app = new Hono();
+function setCorsHeaders(res: VercelResponse) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+}
 
-app.get("/api", (c) => {
-  const url = new URL(c.req.url);
-  console.log("[API] GET /api", { pathname: url.pathname, search: url.search });
-  return c.json({ status: "ok", message: "Club Invaders API is running" });
-});
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  setCorsHeaders(res);
 
-app.get("/api/health", (c) => {
-  const url = new URL(c.req.url);
-  console.log("[API] GET /api/health", { pathname: url.pathname, search: url.search });
-  return c.json({ status: "ok", ts: Date.now() });
-});
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
 
-export default handle(app);
+  console.log("[API] Request:", req.method, req.url);
+
+  if (req.url?.includes("/api/health")) {
+    return res.status(200).json({ status: "ok", ts: Date.now() });
+  }
+
+  return res.status(200).json({ status: "ok", message: "Club Invaders API is running" });
+}
