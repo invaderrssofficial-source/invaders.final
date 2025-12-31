@@ -30,7 +30,10 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
   const queryClient = useQueryClient();
   
   const ordersQuery = trpc.orders.getAll.useQuery(undefined, {
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 30,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     retry: 0,
     retryDelay: 500,
   });
@@ -53,16 +56,16 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
     },
   });
 
-  const addOrder = useCallback((order: Omit<Order, 'id' | 'status' | 'createdAt'>) => {
-    createOrderMutation.mutate(order);
+  const addOrder = useCallback(async (order: Omit<Order, 'id' | 'status' | 'createdAt'>) => {
+    await createOrderMutation.mutateAsync(order);
   }, [createOrderMutation]);
 
-  const updateOrderStatus = useCallback((orderId: string, status: Order['status']) => {
-    updateStatusMutation.mutate({ id: orderId, status });
+  const updateOrderStatus = useCallback(async (orderId: string, status: Order['status']) => {
+    await updateStatusMutation.mutateAsync({ id: orderId, status });
   }, [updateStatusMutation]);
 
-  const deleteOrder = useCallback((orderId: string) => {
-    deleteOrderMutation.mutate({ id: orderId });
+  const deleteOrder = useCallback(async (orderId: string) => {
+    await deleteOrderMutation.mutateAsync({ id: orderId });
   }, [deleteOrderMutation]);
 
   const orders = ordersQuery.data ?? [];
