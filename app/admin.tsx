@@ -958,7 +958,11 @@ export default function AdminScreen() {
           activeOpacity={1}
           onPress={() => setShowStatusModal(false)}
         >
-          <View style={styles.statusModalContent}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.statusModalContent}>
             <Text style={styles.statusModalTitle}>Update Status</Text>
             {STATUS_OPTIONS.map((status) => {
               const config = STATUS_CONFIG[status];
@@ -983,6 +987,7 @@ export default function AdminScreen() {
               );
             })}
           </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
@@ -1020,7 +1025,11 @@ export default function AdminScreen() {
           activeOpacity={1}
           onPress={() => setShowExportModal(false)}
         >
-          <View style={styles.exportModalContent}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.exportModalContent}>
             <Text style={styles.exportModalTitle}>Export Orders</Text>
             <Text style={styles.exportModalSubtitle}>
               Download your orders list in your preferred format
@@ -1063,6 +1072,7 @@ export default function AdminScreen() {
               <Text style={styles.exportCancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>
+            </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
@@ -1077,7 +1087,11 @@ export default function AdminScreen() {
           activeOpacity={1}
           onPress={() => setShowMerchModal(false)}
         >
-          <View style={styles.formModalContent}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.formModalContent}>
             <View style={styles.formModalHeader}>
               <Text style={styles.formModalTitle}>
                 {editingMerch ? 'Edit Merchandise' : 'Add Merchandise'}
@@ -1140,6 +1154,7 @@ export default function AdminScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+            </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
@@ -1154,7 +1169,11 @@ export default function AdminScreen() {
           activeOpacity={1}
           onPress={() => setShowHeroModal(false)}
         >
-          <View style={styles.formModalContent}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.formModalContent}>
             <View style={styles.formModalHeader}>
               <Text style={styles.formModalTitle}>
                 {editingHero ? 'Edit Hero' : 'Add Hero'}
@@ -1246,6 +1265,7 @@ export default function AdminScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+            </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
@@ -1260,7 +1280,11 @@ export default function AdminScreen() {
           activeOpacity={1}
           onPress={() => setShowSettingsModal(false)}
         >
-          <View style={styles.formModalContent}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.formModalContent}>
             <View style={styles.formModalHeader}>
               <Text style={styles.formModalTitle}>Edit Bank Information</Text>
               <TouchableOpacity onPress={() => setShowSettingsModal(false)}>
@@ -1315,6 +1339,7 @@ export default function AdminScreen() {
               <Text style={styles.saveButtonText}>Save Changes</Text>
             </TouchableOpacity>
           </View>
+            </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
     </View>
