@@ -42,6 +42,8 @@ import {
   LogOut,
   Mail,
   Lock,
+  Settings,
+  Building2,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -51,7 +53,7 @@ import { supabase } from '@/lib/supabase';
 
 const { width } = Dimensions.get('window');
 
-type TabType = 'orders' | 'merch' | 'heroes';
+type TabType = 'orders' | 'merch' | 'heroes' | 'settings';
 
 const STATUS_CONFIG: Record<Order['status'], { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: 'Pending', color: '#F59E0B', icon: <Clock size={16} color="#F59E0B" /> },
@@ -71,12 +73,14 @@ export default function AdminScreen() {
   const { 
     merchItems, 
     heroes, 
+    bankInfo,
     addMerchItem, 
     updateMerchItem, 
     deleteMerchItem,
     addHero,
     updateHero,
     deleteHero,
+    updateBankInfo,
   } = useAppContent();
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -104,6 +108,11 @@ export default function AdminScreen() {
   const [heroNumber, setHeroNumber] = useState('');
   const [heroPosition, setHeroPosition] = useState('');
   const [heroImage, setHeroImage] = useState('');
+
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [bankName, setBankName] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
 
   useEffect(() => {
     checkAuth();
@@ -330,6 +339,28 @@ export default function AdminScreen() {
         },
       ]
     );
+  };
+
+  const openEditSettings = () => {
+    setBankName(bankInfo.bankName);
+    setAccountName(bankInfo.accountName);
+    setAccountNumber(bankInfo.accountNumber);
+    setShowSettingsModal(true);
+  };
+
+  const handleSaveSettings = () => {
+    if (!bankName.trim() || !accountName.trim() || !accountNumber.trim()) {
+      Alert.alert('Missing Info', 'Please fill in all fields');
+      return;
+    }
+    
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    updateBankInfo({
+      bankName: bankName.trim(),
+      accountName: accountName.trim(),
+      accountNumber: accountNumber.trim(),
+    });
+    setShowSettingsModal(false);
   };
 
   const generateOrdersHTML = () => {
@@ -786,6 +817,44 @@ export default function AdminScreen() {
     </ScrollView>
   );
 
+  const renderSettingsTab = () => (
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.settingsSection}>
+        <View style={styles.settingsSectionHeader}>
+          <Building2 size={20} color={Colors.primary} />
+          <Text style={styles.settingsSectionTitle}>Bank Transfer Information</Text>
+        </View>
+        <Text style={styles.settingsSectionDesc}>
+          This information will be displayed to customers during checkout
+        </Text>
+
+        <View style={styles.settingsCard}>
+          <View style={styles.settingsRow}>
+            <Text style={styles.settingsLabel}>Bank Name</Text>
+            <Text style={styles.settingsValue}>{bankInfo.bankName}</Text>
+          </View>
+          <View style={styles.settingsRow}>
+            <Text style={styles.settingsLabel}>Account Name</Text>
+            <Text style={styles.settingsValue}>{bankInfo.accountName}</Text>
+          </View>
+          <View style={styles.settingsRow}>
+            <Text style={styles.settingsLabel}>Account Number</Text>
+            <Text style={styles.settingsValue}>{bankInfo.accountNumber}</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.editSettingsButton} onPress={openEditSettings}>
+          <Edit3 size={18} color={Colors.textPrimary} />
+          <Text style={styles.editSettingsButtonText}>Edit Bank Information</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
@@ -859,11 +928,24 @@ export default function AdminScreen() {
             Heroes
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'settings' && styles.tabActive]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setActiveTab('settings');
+          }}
+        >
+          <Settings size={18} color={activeTab === 'settings' ? Colors.primary : Colors.textMuted} />
+          <Text style={[styles.tabText, activeTab === 'settings' && styles.tabTextActive]}>
+            Settings
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {activeTab === 'orders' && renderOrdersTab()}
       {activeTab === 'merch' && renderMerchTab()}
       {activeTab === 'heroes' && renderHeroesTab()}
+      {activeTab === 'settings' && renderSettingsTab()}
 
       <Modal
         visible={showStatusModal}
@@ -1162,6 +1244,75 @@ export default function AdminScreen() {
               <Text style={styles.saveButtonText}>
                 {editingHero ? 'Save Changes' : 'Add Hero'}
               </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        visible={showSettingsModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSettingsModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSettingsModal(false)}
+        >
+          <View style={styles.formModalContent}>
+            <View style={styles.formModalHeader}>
+              <Text style={styles.formModalTitle}>Edit Bank Information</Text>
+              <TouchableOpacity onPress={() => setShowSettingsModal(false)}>
+                <X size={22} color={Colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <Building2 size={16} color={Colors.textMuted} />
+                <Text style={styles.inputLabelText}>Bank Name</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Bank of Maldives (BML)"
+                placeholderTextColor={Colors.textMuted}
+                value={bankName}
+                onChangeText={setBankName}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <User size={16} color={Colors.textMuted} />
+                <Text style={styles.inputLabelText}>Account Name</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Club Invaders"
+                placeholderTextColor={Colors.textMuted}
+                value={accountName}
+                onChangeText={setAccountName}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputLabel}>
+                <Hash size={16} color={Colors.textMuted} />
+                <Text style={styles.inputLabelText}>Account Number</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. 7730000123456"
+                placeholderTextColor={Colors.textMuted}
+                value={accountNumber}
+                onChangeText={setAccountNumber}
+                keyboardType="numeric"
+              />
+            </View>
+
+            <TouchableOpacity style={styles.saveButton} onPress={handleSaveSettings}>
+              <Text style={styles.saveButtonText}>Save Changes</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -1783,6 +1934,61 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.textPrimary,
+  },
+  settingsSection: {
+    marginBottom: 24,
+  },
+  settingsSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  settingsSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: Colors.textPrimary,
+  },
+  settingsSectionDesc: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  settingsCard: {
+    backgroundColor: Colors.backgroundCard,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 16,
+  },
+  settingsRow: {
+    paddingVertical: 12,
+  },
+  settingsLabel: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginBottom: 4,
+  },
+  settingsValue: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.textPrimary,
+  },
+  editSettingsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
+    gap: 8,
+  },
+  editSettingsButtonText: {
+    fontSize: 15,
     fontWeight: '700' as const,
     color: Colors.textPrimary,
   },

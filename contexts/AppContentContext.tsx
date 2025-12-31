@@ -18,6 +18,12 @@ export interface Hero {
   image: string;
 }
 
+export interface BankTransferInfo {
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+}
+
 const DEFAULT_MERCH: MerchItem[] = [
   { id: '1', name: 'Invaders Jersey', price: 'MVR 450', image: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/178mqg61am4g21236pwuw' },
   { id: '2', name: 'Training Tee', price: 'MVR 350', image: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/34uyhij0bcupj5bflvvl4' },
@@ -50,6 +56,12 @@ export const [AppContentProvider, useAppContent] = createContextHook(() => {
   });
 
   const heroesQuery = trpc.heroes.getAll.useQuery(undefined, {
+    staleTime: 1000 * 60 * 5,
+    retry: 0,
+    retryDelay: 500,
+  });
+
+  const settingsQuery = trpc.settings.get.useQuery(undefined, {
     staleTime: 1000 * 60 * 5,
     retry: 0,
     retryDelay: 500,
@@ -91,6 +103,12 @@ export const [AppContentProvider, useAppContent] = createContextHook(() => {
     },
   });
 
+  const updateSettingsMutation = trpc.settings.update.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [['settings', 'get']] });
+    },
+  });
+
   const addMerchItem = useCallback((item: Omit<MerchItem, 'id'>) => {
     createMerchMutation.mutate(item);
   }, [createMerchMutation]);
@@ -115,6 +133,10 @@ export const [AppContentProvider, useAppContent] = createContextHook(() => {
     deleteHeroMutation.mutate({ id });
   }, [deleteHeroMutation]);
 
+  const updateBankInfo = useCallback((info: BankTransferInfo) => {
+    updateSettingsMutation.mutate(info);
+  }, [updateSettingsMutation]);
+
   const merchItems = merchQuery.data && merchQuery.data.length > 0 
     ? merchQuery.data 
     : DEFAULT_MERCH;
@@ -123,9 +145,16 @@ export const [AppContentProvider, useAppContent] = createContextHook(() => {
     ? heroesQuery.data 
     : DEFAULT_HEROES;
 
+  const bankInfo = settingsQuery.data || {
+    bankName: 'Bank of Maldives (BML)',
+    accountName: 'Club Invaders',
+    accountNumber: '7730000123456',
+  };
+
   return {
     merchItems,
     heroes,
+    bankInfo,
     isLoading: merchQuery.isLoading || heroesQuery.isLoading,
     addMerchItem,
     updateMerchItem,
@@ -133,9 +162,11 @@ export const [AppContentProvider, useAppContent] = createContextHook(() => {
     addHero,
     updateHero: updateHeroItem,
     deleteHero: deleteHeroItem,
+    updateBankInfo,
     refetch: () => {
       merchQuery.refetch();
       heroesQuery.refetch();
+      settingsQuery.refetch();
     },
   };
 });

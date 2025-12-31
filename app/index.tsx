@@ -65,18 +65,10 @@ const formatPrice = (price: string): string => {
 const ADULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const KIDS_SIZES = ['4', '6', '8', '10', '12', '14'];
 
-const BANK_INFO = {
-  bankName: 'Bank of Maldives (BML)',
-  accountName: 'Club Invaders',
-  accountNumber: '7730000123456',
-};
-
-
-
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { addOrder } = useOrders();
-  const { merchItems, heroes } = useAppContent();
+  const { merchItems, heroes, bankInfo } = useAppContent();
   const scrollY = useRef(new Animated.Value(0)).current;
   const heroOpacity = useRef(new Animated.Value(0)).current;
   const heroScale = useRef(new Animated.Value(0.9)).current;
@@ -1068,16 +1060,16 @@ export default function HomeScreen() {
                 <View style={styles.bankInfoCard}>
                   <View style={styles.bankInfoRow}>
                     <Text style={styles.bankInfoLabel}>Bank</Text>
-                    <Text style={styles.bankInfoValue}>{BANK_INFO.bankName}</Text>
+                    <Text style={styles.bankInfoValue}>{bankInfo.bankName}</Text>
                   </View>
                   <View style={styles.bankInfoRow}>
                     <Text style={styles.bankInfoLabel}>Account Name</Text>
-                    <Text style={styles.bankInfoValue}>{BANK_INFO.accountName}</Text>
+                    <Text style={styles.bankInfoValue}>{bankInfo.accountName}</Text>
                   </View>
                   <View style={styles.bankInfoRowAccount}>
                     <View style={styles.bankInfoAccountLeft}>
                       <Text style={styles.bankInfoLabel}>Account Number</Text>
-                      <Text style={styles.bankAccountNumber}>{BANK_INFO.accountNumber}</Text>
+                      <Text style={styles.bankAccountNumber}>{bankInfo.accountNumber}</Text>
                     </View>
                     <TouchableOpacity
                       style={[
@@ -1087,7 +1079,7 @@ export default function HomeScreen() {
                       onPress={() => {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         if (Platform.OS === 'web') {
-                          navigator.clipboard.writeText(BANK_INFO.accountNumber);
+                          navigator.clipboard.writeText(bankInfo.accountNumber);
                         }
                         setCopiedAccount(true);
                         setTimeout(() => setCopiedAccount(false), 2000);
