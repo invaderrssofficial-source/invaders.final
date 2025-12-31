@@ -63,47 +63,49 @@ export const ordersRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      try {
-        console.log("[Orders] Creating order for:", input.customerName);
-        
-        const { data, error } = await Promise.race([
-          supabase
-            .from("orders")
-            .insert({
-              customer_name: input.customerName,
-              customer_phone: input.customerPhone,
-              items: input.items,
-              total_price: input.totalPrice,
-              transfer_slip_uri: input.transferSlipUri,
-              status: "pending",
-            })
-            .select()
-            .single(),
-          new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error('Insert timeout')), 5000)
-          )
-        ]);
+      console.log("[Orders] Creating order for:", input.customerName);
+      console.log("[Orders] Items count:", input.items.length);
+      
+      const insertData = {
+        customer_name: input.customerName,
+        customer_phone: input.customerPhone,
+        items: input.items,
+        total_price: input.totalPrice,
+        transfer_slip_uri: input.transferSlipUri,
+        status: "pending",
+      };
+      
+      console.log("[Orders] Insert data:", JSON.stringify(insertData));
+      
+      const result = await supabase
+        .from("orders")
+        .insert(insertData)
+        .select()
+        .single();
 
-        if (error) {
-          console.error("[Orders] Error creating order:", error.message);
-          throw new Error(`Failed to create order: ${error.message}`);
-        }
+      console.log("[Orders] Supabase result:", JSON.stringify(result));
 
-        console.log("[Orders] Order created successfully:", data.id);
-        return {
-          id: data.id,
-          customerName: data.customer_name,
-          customerPhone: data.customer_phone,
-          items: data.items,
-          totalPrice: data.total_price,
-          transferSlipUri: data.transfer_slip_uri,
-          status: data.status,
-          createdAt: data.created_at,
-        };
-      } catch (error: any) {
-        console.error("[Orders] Mutation failed:", error);
-        throw new Error(error.message || 'Failed to create order');
+      if (result.error) {
+        console.error("[Orders] Error creating order:", result.error.message, result.error.code, result.error.details);
+        throw new Error(`Failed to create order: ${result.error.message}`);
       }
+
+      if (!result.data) {
+        console.error("[Orders] No data returned from insert");
+        throw new Error('Failed to create order: No data returned');
+      }
+
+      console.log("[Orders] Order created successfully:", result.data.id);
+      return {
+        id: result.data.id,
+        customerName: result.data.customer_name,
+        customerPhone: result.data.customer_phone,
+        items: result.data.items,
+        totalPrice: result.data.total_price,
+        transferSlipUri: result.data.transfer_slip_uri,
+        status: result.data.status,
+        createdAt: result.data.created_at,
+      };
     }),
 
   updateStatus: publicProcedure
