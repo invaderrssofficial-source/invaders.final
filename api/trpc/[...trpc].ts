@@ -28,6 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let body: string | undefined;
     if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
       body = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+      console.log("[tRPC] Request body:", body.substring(0, 500));
     }
 
     const fetchRequest = new Request(url.toString(), {
@@ -42,12 +43,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       router: appRouter,
       createContext,
       onError({ error, path, type }) {
-        console.error("[tRPC] Error:", { path, type, message: error.message });
+        console.error("[tRPC] Error:", { path, type, message: error.message, stack: error.stack });
       },
     });
 
     const responseBody = await response.text();
     console.log("[tRPC] Response status:", response.status, "Body length:", responseBody.length);
+    
+    if (responseBody.length > 0) {
+      console.log("[tRPC] Response preview:", responseBody.substring(0, 300));
+    }
     
     response.headers.forEach((value, key) => {
       if (key.toLowerCase() !== "content-length") {
@@ -56,9 +61,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     res.setHeader("Content-Type", "application/json");
+    
+    if (!responseBody || responseBody.length === 0) {
+      console.error("[tRPC] Empty response body, returning error");
+      return res.status(500).json({ 
+        error: { 
+          message: "Empty response from server",
+          code: "INTERNAL_SERVER_ERROR"
+        } 
+      });
+    }
+    
     return res.status(response.status).send(responseBody);
   } catch (error: any) {
-    console.error("[tRPC] Handler error:", error);
-    return res.status(500).json({ error: "Internal server error", message: error.message });
+    console.error("[tRPC] Handler error:", error.message, error.stack);
+    return res.status(500).json({ 
+      error: { 
+        message: error.message || "Internal server error",
+        code: "INTERNAL_SERVER_ERROR"
+      } 
+    });
   }
 }
