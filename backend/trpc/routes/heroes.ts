@@ -88,25 +88,24 @@ export const heroesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      try {
-        const { id, ...updates } = input;
-        const { data, error } = await supabase
-          .from("heroes")
-          .update(updates)
-          .eq("id", id)
-          .select()
-          .single();
+      console.log("[Heroes] Updating hero:", input.id);
+      const { id, ...updates } = input;
+      
+      const result = await supabase
+        .from("heroes")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
 
-        if (error) {
-          console.error("[Heroes] Error updating hero:", error);
-          throw new Error(error.message);
-        }
+      console.log("[Heroes] Update result:", JSON.stringify(result));
 
-        return { success: true, data };
-      } catch (error: any) {
-        console.error("[Heroes] Update mutation failed:", error);
-        throw new Error(error.message || 'Failed to update hero');
+      if (result.error) {
+        console.error("[Heroes] Error updating hero:", result.error.message);
+        throw new Error(result.error.message);
       }
+
+      return { success: true, data: result.data };
     }),
 
   delete: publicProcedure
