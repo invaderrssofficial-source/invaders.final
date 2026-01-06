@@ -110,11 +110,27 @@ export const [AppContentProvider, useAppContent] = createContextHook(() => {
   });
 
   const addMerchItem = useCallback(async (item: Omit<MerchItem, 'id'>) => {
-    await createMerchMutation.mutateAsync(item);
+    try {
+      console.log('[AppContentContext] Creating merch item...', item);
+      const result = await createMerchMutation.mutateAsync(item);
+      console.log('[AppContentContext] Merch item created successfully:', result);
+      return result;
+    } catch (error: any) {
+      console.error('[AppContentContext] Failed to create merch:', error);
+      throw error;
+    }
   }, [createMerchMutation]);
 
   const updateMerchItem = useCallback(async (id: string, updates: Partial<MerchItem>) => {
-    await updateMerchMutation.mutateAsync({ id, ...updates });
+    try {
+      console.log('[AppContentContext] Updating merch item...', id, updates);
+      const result = await updateMerchMutation.mutateAsync({ id, ...updates });
+      console.log('[AppContentContext] Merch item updated successfully:', result);
+      return result;
+    } catch (error: any) {
+      console.error('[AppContentContext] Failed to update merch:', error);
+      throw error;
+    }
   }, [updateMerchMutation]);
 
   const deleteMerchItem = useCallback(async (id: string) => {
@@ -122,11 +138,27 @@ export const [AppContentProvider, useAppContent] = createContextHook(() => {
   }, [deleteMerchMutation]);
 
   const addHero = useCallback(async (hero: Omit<Hero, 'id'>) => {
-    await createHeroMutation.mutateAsync(hero);
+    try {
+      console.log('[AppContentContext] Creating hero...', hero);
+      const result = await createHeroMutation.mutateAsync(hero);
+      console.log('[AppContentContext] Hero created successfully:', result);
+      return result;
+    } catch (error: any) {
+      console.error('[AppContentContext] Failed to create hero:', error);
+      throw error;
+    }
   }, [createHeroMutation]);
 
   const updateHeroItem = useCallback(async (id: string, updates: Partial<Hero>) => {
-    await updateHeroMutation.mutateAsync({ id, ...updates });
+    try {
+      console.log('[AppContentContext] Updating hero...', id, updates);
+      const result = await updateHeroMutation.mutateAsync({ id, ...updates });
+      console.log('[AppContentContext] Hero updated successfully:', result);
+      return result;
+    } catch (error: any) {
+      console.error('[AppContentContext] Failed to update hero:', error);
+      throw error;
+    }
   }, [updateHeroMutation]);
 
   const deleteHeroItem = useCallback(async (id: string) => {
@@ -134,7 +166,15 @@ export const [AppContentProvider, useAppContent] = createContextHook(() => {
   }, [deleteHeroMutation]);
 
   const updateBankInfo = useCallback(async (info: BankTransferInfo) => {
-    await updateSettingsMutation.mutateAsync(info);
+    try {
+      console.log('[AppContentContext] Updating bank info...', info);
+      const result = await updateSettingsMutation.mutateAsync(info);
+      console.log('[AppContentContext] Bank info updated successfully:', result);
+      return result;
+    } catch (error: any) {
+      console.error('[AppContentContext] Failed to update bank info:', error);
+      throw error;
+    }
   }, [updateSettingsMutation]);
 
   const merchItems = merchQuery.data && merchQuery.data.length > 0 
