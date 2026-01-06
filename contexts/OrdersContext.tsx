@@ -57,11 +57,27 @@ export const [OrdersProvider, useOrders] = createContextHook(() => {
   });
 
   const addOrder = useCallback(async (order: Omit<Order, 'id' | 'status' | 'createdAt'>) => {
-    await createOrderMutation.mutateAsync(order);
+    try {
+      console.log('[OrdersContext] Creating order...', order);
+      const result = await createOrderMutation.mutateAsync(order);
+      console.log('[OrdersContext] Order created successfully:', result);
+      return result;
+    } catch (error: any) {
+      console.error('[OrdersContext] Failed to create order:', error);
+      throw error;
+    }
   }, [createOrderMutation]);
 
   const updateOrderStatus = useCallback(async (orderId: string, status: Order['status']) => {
-    await updateStatusMutation.mutateAsync({ id: orderId, status });
+    try {
+      console.log('[OrdersContext] Updating order status...', orderId, status);
+      const result = await updateStatusMutation.mutateAsync({ id: orderId, status });
+      console.log('[OrdersContext] Status updated successfully');
+      return result;
+    } catch (error: any) {
+      console.error('[OrdersContext] Failed to update status:', error);
+      throw error;
+    }
   }, [updateStatusMutation]);
 
   const deleteOrder = useCallback(async (orderId: string) => {
