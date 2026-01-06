@@ -54,6 +54,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log("[tRPC] Response preview:", responseBody.substring(0, 300));
     }
     
+    if (!responseBody || responseBody.length === 0) {
+      console.error("[tRPC] Empty response body, returning error");
+      res.setHeader("Content-Type", "application/json");
+      return res.status(500).json([{ 
+        error: { 
+          json: {
+            message: "Empty response from server",
+            code: "INTERNAL_SERVER_ERROR",
+            data: { code: "INTERNAL_SERVER_ERROR" }
+          }
+        } 
+      }]);
+    }
+
+    try {
+      JSON.parse(responseBody);
+    } catch (parseError) {
+      console.error("[tRPC] Invalid JSON response:", parseError);
+      res.setHeader("Content-Type", "application/json");
+      return res.status(500).json([{ 
+        error: { 
+          json: {
+            message: "Invalid server response",
+            code: "INTERNAL_SERVER_ERROR",
+            data: { code: "INTERNAL_SERVER_ERROR" }
+          }
+        } 
+      }]);
+    }
+    
     response.headers.forEach((value, key) => {
       if (key.toLowerCase() !== "content-length") {
         res.setHeader(key, value);
@@ -61,25 +91,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     res.setHeader("Content-Type", "application/json");
-    
-    if (!responseBody || responseBody.length === 0) {
-      console.error("[tRPC] Empty response body, returning error");
-      return res.status(500).json({ 
-        error: { 
-          message: "Empty response from server",
-          code: "INTERNAL_SERVER_ERROR"
-        } 
-      });
-    }
-    
     return res.status(response.status).send(responseBody);
   } catch (error: any) {
     console.error("[tRPC] Handler error:", error.message, error.stack);
-    return res.status(500).json({ 
+    res.setHeader("Content-Type", "application/json");
+    return res.status(500).json([{ 
       error: { 
-        message: error.message || "Internal server error",
-        code: "INTERNAL_SERVER_ERROR"
+        json: {
+          message: error.message || "Internal server error",
+          code: "INTERNAL_SERVER_ERROR",
+          data: { code: "INTERNAL_SERVER_ERROR" }
+        }
       } 
-    });
+    }]);
   }
 }
